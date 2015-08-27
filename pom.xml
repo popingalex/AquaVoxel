@@ -5,4 +5,11 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>AquaVoxel</name>
   <description>a voxel editor</description>
+  <dependencies>
+  	<dependency>
+  		<groupId>AquaCraft</groupId>
+  		<artifactId>AquaCraft</artifactId>
+  		<version>0.0.1-SNAPSHOT</version>
+  	</dependency>
+  </dependencies>
 </project>
