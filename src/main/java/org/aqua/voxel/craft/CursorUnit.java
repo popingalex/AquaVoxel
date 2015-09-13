@@ -7,10 +7,10 @@ import com.sun.j3d.utils.geometry.Box;
 
 public class CursorUnit extends AbstractUnit {
     private static float Edge = 0.01f;
-    private Box box;
-    public CursorUnit(float size) {
-        size = size - Edge*2;
-        
+    private Box          box;
+    public CursorUnit() {
+        float size = unit - Edge * 2;
+
         int tMode = TransparencyAttributes.BLENDED;
         float tVal = 0.5f;
         int srcBlendFunction = TransparencyAttributes.BLEND_SRC_ALPHA;
@@ -18,11 +18,10 @@ public class CursorUnit extends AbstractUnit {
         TransparencyAttributes attributes = new TransparencyAttributes(tMode, tVal, srcBlendFunction, dstBlendFunction);
         Appearance app = new Appearance();
         app.setTransparencyAttributes(attributes);
-        box = new Box(size, size, size, app);
+        box = new Box(size / 2, size / 2, size / 2, app);
         box.setPickable(false);
-        
+
         contentBranch.addChild(box);
-//        unitBranch.addChild(box);
     }
 
 }

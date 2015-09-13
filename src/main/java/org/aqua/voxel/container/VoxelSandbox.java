@@ -1,130 +1,99 @@
 package org.aqua.voxel.container;
 
-import javax.media.j3d.BoundingBox;
-import javax.media.j3d.BranchGroup;
-import javax.media.j3d.Node;
-import javax.media.j3d.Shape3D;
-import javax.media.j3d.Transform3D;
-import javax.media.j3d.TransformGroup;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3i;
-import javax.vecmath.Vector3d;
-
 import org.aqua.graph.voxel.VoxelMatrixNode;
 import org.aqua.graph.voxel.VoxelMatrixRoot;
-import org.aqua.graph.voxel.VoxelMatrixConstant;
 import org.aqua.graph.voxel.VoxelMatrixUtil;
 import org.aqua.voxel.craft.AbstractUnit;
+import org.aqua.voxel.craft.ArrowUnit;
 import org.aqua.voxel.craft.CursorUnit;
 import org.aqua.voxel.craft.ModelUnit;
 import org.aqua.voxel.craft.WorkbenchUnit;
 
-public class VoxelSandbox extends BranchGroup {
-    private VoxelMatrixRoot workbenchRoot;
-    private VoxelMatrixRoot modelRoot;
-    private TransformGroup  scaleGroup;
-    private TransformGroup  liftGroup;
-    private CursorUnit      cursor;
-    private AbstractUnit    focus;
+public abstract class VoxelSandbox {
+    public static final String BRANCH_MODEL     = "MODEL";
+    public static final String BRANCH_CURSOR    = "CURSOR";
+    public static final String BRANCH_WORKBENCH = "WORKBENCH";
 
-    private int             floor = 0;
-    private float           unit  = 0.2f;
+    private VoxelMatrixRoot    workbenchRoot;
+    private VoxelMatrixRoot    modelRoot;
+    private AbstractUnit       focusUnit;
+    private CursorUnit         cursor;
+
+    public int                 floor            = 0;
+    public float               unit             = 0.4f;
+    public float               floorOffset      = (unit + WorkbenchUnit.WorkbenchHeight) / 2;
     public VoxelSandbox() {
-        AbstractUnit.unit = unit * 2;
-        Transform3D liftTransform = new Transform3D();
-        liftTransform.setTranslation(new Vector3d(new Vector3d(0, -unit - WorkbenchUnit.WorkbenchHeight / 2, 0)));
-        liftGroup = new TransformGroup();
-        liftGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        liftGroup.setTransform(liftTransform);
+        AbstractUnit.unit = unit;
 
-        scaleGroup = new TransformGroup();
-        scaleGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        scaleGroup.addChild(liftGroup);
-        addChild(scaleGroup);
-        scale(10);
-        cursor = new CursorUnit(unit);
-        scaleGroup.addChild(cursor);
         workbenchRoot = new VoxelMatrixRoot() {
 
             @Override
             public void attachContent(VoxelMatrixNode node) {
-                WorkbenchUnit content = new WorkbenchUnit(unit);
+                WorkbenchUnit content = new WorkbenchUnit();
                 content.setCoord3(node.coord3);
-                liftGroup.addChild(content);
                 content.rollover();
                 node.content = content;
-            }
-
-            @Override
-            public void removeContent(VoxelMatrixNode node) {
-                // TODO Auto-generated method stub
-                super.removeContent(node);
+                addChild(content, BRANCH_WORKBENCH);
             }
 
         };
+
         modelRoot = new VoxelMatrixRoot() {
+
             @Override
             public void attachContent(VoxelMatrixNode node) {
-                ModelUnit content = new ModelUnit(unit);
+                ModelUnit content = new ModelUnit();
                 content.setCoord3(node.coord3);
-                scaleGroup.addChild(content);
                 // content.rollover();
                 node.content = content;
-            }
-
-            @Override
-            public void removeContent(VoxelMatrixNode node) {
-                // TODO Auto-generated method stub
-                super.removeContent(node);
+                addChild(content, BRANCH_MODEL);
             }
 
         };
-        // ((AbstractUnit)modelRoot.findNode(0, 0, 0).content).rollover();
-        buildWorkbench(10);
+        
+        int[] lower = new int[] { -15, -15, -15 };
+        int[] upper = new int[] { 15, 15, 15 };
+        
+        int[] size = new int[] { 10, 10, 10 };
+        lower = new int[] { -(size[0] - 1) / 2, 0, 0 };
+        upper = new int[] { size[0] / 2, 0, size[2] - 1 };
+        
+        workbenchRoot.realloc(lower, upper);
+        
+        lower = new int[] { -(size[0] - 1) / 2, 0, 0 };
+        upper = new int[] { size[0] / 2, size[1], size[2] - 1 };
+        
+        modelRoot.realloc(lower, upper);
+        
+        // ((AbstractUnit) modelRoot.findNode(new int[3]).content).rollover();
+        buildCursor();
+        // buildArrow();
     }
 
-    private void buildWorkbench(int radius) {
-        workbenchRoot.realloc(new int[] { -radius, 0, -radius }, new int[] { radius, 0, radius });
+    public void buildCursor() {
+        addChild(cursor = new CursorUnit(), BRANCH_CURSOR);
     }
 
-    private void buildModel() {
-
+    public void buildArrow() {
+        ArrowUnit arrow = new ArrowUnit();
+        arrow.rollover();
+        addChild(arrow, VoxelUniverse.BRANCH_ARROW);
     }
 
-    public void buildCursor(int x, int y, int z, int direction) {
+    public abstract void addChild(Object node, String branch);
+    
+    public abstract void removeChild(Object node, String branch);
 
-    }
-
-    public void lift(int unit) {
-        Transform3D liftTransform = new Transform3D();
-        liftGroup.getTransform(liftTransform);
-        Vector3d liftVector = new Vector3d();
-        liftTransform.get(liftVector);
-        liftVector.y += unit;
-        floor += unit;
-        liftTransform.setTranslation(liftVector);
-        liftGroup.setTransform(liftTransform);
-    }
-
-    public void scale(int scale) {
-        Transform3D scaleTransform = new Transform3D();
-        scaleGroup.getTransform(scaleTransform);
-        scaleTransform.setScale(Math.max(scaleTransform.getScale() + scale * 0.1f, 1));
-        scaleGroup.setTransform(scaleTransform);
-    }
-
-    public void hover(Node pickNode, Node pickFace) {
-        AbstractUnit pickUnit = null;
-        if (pickNode != null) {         // 有pick对象
-            pickUnit = (AbstractUnit) pickNode.getParent().getParent().getParent();
-            if (focus == pickUnit) {
+    public void hover(AbstractUnit pickUnit, int id) {
+        if (pickUnit != null) {             // 有pick对象
+            if (focusUnit == pickUnit) {
                 // return;
-            } else if (focus != null) { // blur旧焦点
-                focus.blur();
-            } else {                    // 点亮cursor
+            } else if (focusUnit != null) { // blur旧焦点
+                focusUnit.blur();
+            } else {                        // 点亮cursor
                 cursor.rollover();
             }
-            focus = pickUnit;
+            focusUnit = pickUnit;
             if (pickUnit instanceof WorkbenchUnit) {
                 pickUnit.focus();
                 int[] coord3 = pickUnit.getCoord3();
@@ -132,20 +101,59 @@ public class VoxelSandbox extends BranchGroup {
             } else if (pickUnit instanceof ModelUnit) {
                 ModelUnit model = (ModelUnit) pickUnit;
                 int[] coord3 = model.getCoord3();
-                int[] offset = model.getFaceNormal((Shape3D) pickFace);
-                model.focus((Shape3D) pickFace);
-                cursor.setCoord3(new int[] { coord3[0] + offset[0], coord3[1] + offset[1], coord3[2] + offset[2] });
+                if (coord3[1] >= floor) {
+                    int[] offset = ModelUnit.FACE_OFFSET[id];
+                    model.focus(id);
+                    cursor.setCoord3(new int[] { coord3[0] + offset[0], coord3[1] + offset[1], coord3[2] + offset[2] });
+                }
             }
-        } else if (focus != null) {     // 无pick有焦点
-            focus.blur();
-            focus = null;
+        } else if (focusUnit != null) {     // 无pick有焦点
+            focusUnit.blur();
+            focusUnit = null;
             cursor.rollover();
         }
     }
 
-    public void leftClick(Node pickNode, Node pickFace) {
-        AbstractUnit pickUnit = null;
-        pickUnit = (AbstractUnit) pickNode.getParent().getParent().getParent();
+    public void leftClick(AbstractUnit pickUnit, int normal) {
+        if (pickUnit instanceof WorkbenchUnit) {
+            int[] coord3 = pickUnit.getCoord3();
+            coord3 = new int[] { coord3[0], floor, coord3[2] };
+            VoxelMatrixNode node = modelRoot.findNode(coord3);
+            if (node == null) {
+                int[] lower = modelRoot.lowerPoint.clone();
+                int[] upper = modelRoot.upperPoint.clone();
+                VoxelMatrixUtil.packagePoint(lower, upper, coord3);
+                modelRoot.realloc(lower, upper);
+                modelRoot.lowerPoint = lower;
+                modelRoot.upperPoint = upper;
+                node = modelRoot.findNode(coord3);
+            }
+            ModelUnit unit = (ModelUnit) node.content;
+            if (!unit.isVisible()) {
+                unit.rollover();
+            }
+        } else if (pickUnit instanceof ModelUnit) {
+            int[] coord3 = pickUnit.getCoord3();
+            int[] offset = ModelUnit.FACE_OFFSET[normal];
+            for (int i = 0; i < 3; i++) {
+                coord3[i] += offset[i];
+            }
+            VoxelMatrixNode node = modelRoot.findNode(coord3);
+            if (node == null) {
+                int[] lower = modelRoot.lowerPoint.clone();
+                int[] upper = modelRoot.upperPoint.clone();
+                VoxelMatrixUtil.packagePoint(lower, upper, coord3);
+                modelRoot.realloc(lower, upper);
+                node = modelRoot.findNode(coord3);
+            }
+            ModelUnit unit = (ModelUnit) node.content;
+            if (!unit.isVisible()) {
+                unit.rollover();
+            }
+        }
+    }
+
+    public void rightClick(AbstractUnit pickUnit, int normal) {
         if (pickUnit instanceof WorkbenchUnit) {
             int[] coord3 = pickUnit.getCoord3();
             coord3 = new int[] { coord3[0], coord3[1] + floor, coord3[2] };
@@ -153,19 +161,25 @@ public class VoxelSandbox extends BranchGroup {
             if (node == null) {
                 int[] lower = modelRoot.lowerPoint.clone();
                 int[] upper = modelRoot.upperPoint.clone();
-                VoxelMatrixUtil.packagePoints(lower, upper, coord3);
+                VoxelMatrixUtil.packagePoint(lower, upper, coord3);
                 modelRoot.realloc(lower, upper);
                 node = modelRoot.findNode(coord3);
             }
-            ModelUnit unit = (ModelUnit)node.content;
-            unit.rollover();
+            ModelUnit unit = (ModelUnit) node.content;
+            if (unit.isVisible()) {
+                unit.rollover();
+            }
         } else if (pickUnit instanceof ModelUnit) {
-            System.out.println("model");
+            pickUnit.rollover();
         }
     }
 
-    public void rightClick(Node pickNode, Node pickFace) {
-        System.out.println("right");
+    public String exportModel() {
+        return modelRoot.exportModel();
+    }
+
+    public void importModel(String data) {
+        modelRoot.importModel(data);
     }
 
 }

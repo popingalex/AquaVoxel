@@ -1,8 +1,12 @@
 package org.aqua.voxel.craft;
 
+import java.awt.Color;
+
 import javax.media.j3d.Appearance;
+import javax.media.j3d.Material;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TransparencyAttributes;
+import javax.vecmath.Color3f;
 
 import com.sun.j3d.utils.geometry.Box;
 
@@ -15,22 +19,27 @@ public class WorkbenchUnit extends AbstractUnit {
 
     {
         int tMode = TransparencyAttributes.BLENDED;
-        float tVal = 0.5f;
+        float tVal = 0.8f;
         int srcBlendFunction = TransparencyAttributes.BLEND_SRC_ALPHA;
         int dstBlendFunction = TransparencyAttributes.BLEND_ONE;
         TransparencyAttributes attributes = new TransparencyAttributes(tMode, tVal, srcBlendFunction, dstBlendFunction);
         NormalAppearance = new Appearance();
+        Color3f ambient = new Color3f(Color.cyan);  // 环境光
+        Color3f emissive = new Color3f(Color.black);// 自发光
+        Color3f diffuse = new Color3f(Color.cyan);  // 扩散光
+        Color3f specular = new Color3f(Color.black);// 反射光
+
+        NormalAppearance.setMaterial(new Material(ambient, emissive, diffuse, specular, 0.2f));
         NormalAppearance.setTransparencyAttributes(attributes);
         HighlightAppearance = new Appearance();
     }
 
-    public WorkbenchUnit(float size) {
-        size = size - Edge * 2;
-        workbenchBox = new Box(size, WorkbenchHeight, size, NormalAppearance);
+    public WorkbenchUnit() {
+        float size = unit - Edge * 2;
+        workbenchBox = new Box(size / 2, WorkbenchHeight, size / 2, NormalAppearance);
         workbenchBox.getShape(Box.TOP).setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-        
+
         contentBranch.addChild(workbenchBox);
-//        unitBranch.addChild(workbenchBox);
     }
 
     @Override
