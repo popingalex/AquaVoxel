@@ -15,12 +15,13 @@ import org.aqua.graph.voxel.VoxelMatrixNode;
 import com.sun.j3d.utils.geometry.Cone;
 import com.sun.j3d.utils.geometry.Cylinder;
 
-public class ArrowUnit extends AbstractUnit {
+public class BeaconUnit extends AbstractUnit {
     private Cone[]           arrows       = new Cone[3];
     private Cylinder[]       handles      = new Cylinder[3];
     private TransformGroup[] arrowGroups  = new TransformGroup[3];
     private TransformGroup[] handleGroups = new TransformGroup[3];
-    public ArrowUnit() {
+    public BeaconUnit() {
+        super(UnitType.Beacon);
         Color3f black = new Color3f(Color.black);
         Color3f red = new Color3f(Color.red);
         Color3f green = new Color3f(Color.green);
@@ -40,7 +41,7 @@ public class ArrowUnit extends AbstractUnit {
             case VoxelMatrixNode.IndexX:
                 app.setMaterial(new Material(red, black, red, black, 1f));
                 app.setTransparencyAttributes(attributes);
-                arrowTransform.rotZ(Math.PI *3 / 2);
+                arrowTransform.rotZ(Math.PI * 3 / 2);
                 handleTransform.rotZ(Math.PI / 2);
                 arrowTransform.setTranslation(new Vector3d(8, 0, 0));
                 break;
@@ -55,16 +56,16 @@ public class ArrowUnit extends AbstractUnit {
                 arrowTransform.setTranslation(new Vector3d(0, 8, 0));
                 break;
             }
-            arrows[i] = new Cone(unit/3, unit, app);
+            arrows[i] = new Cone(unit / 3, unit, app);
+            arrows[i].setPickable(false);
             handles[i] = new Cylinder(unit / 6, 16, app);
-
+            handles[i].setPickable(false);
             arrowGroups[i] = new TransformGroup(arrowTransform);
             arrowGroups[i].addChild(arrows[i]);
             handleGroups[i] = new TransformGroup(handleTransform);
             handleGroups[i].addChild(handles[i]);
-            contentBranch.addChild(arrowGroups[i]);
-            contentBranch.addChild(handleGroups[i]);
+            transformGroup.addChild(arrowGroups[i]);
+            transformGroup.addChild(handleGroups[i]);
         }
     }
-
 }

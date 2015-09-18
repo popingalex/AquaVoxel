@@ -9,6 +9,7 @@ public class CursorUnit extends AbstractUnit {
     private static float Edge = 0.01f;
     private Box          box;
     public CursorUnit() {
+        super(UnitType.Cursor);
         float size = unit - Edge * 2;
 
         int tMode = TransparencyAttributes.BLENDED;
@@ -21,7 +22,6 @@ public class CursorUnit extends AbstractUnit {
         box = new Box(size / 2, size / 2, size / 2, app);
         box.setPickable(false);
 
-        contentBranch.addChild(box);
+        transformGroup.addChild(box);
     }
-
 }

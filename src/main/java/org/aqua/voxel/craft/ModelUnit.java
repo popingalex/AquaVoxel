@@ -36,6 +36,7 @@ public class ModelUnit extends AbstractUnit {
     }
 
     public ModelUnit() {
+        super(UnitType.Model);
         float sizeVoxel = unit - Edge * 2;
         float sizeDecor = unit - Edge;
         voxelBox = new Box(sizeVoxel / 2, sizeVoxel / 2, sizeVoxel / 2, Box.GENERATE_TEXTURE_COORDS, null);
@@ -67,8 +68,8 @@ public class ModelUnit extends AbstractUnit {
 
         voxelBox.setAppearance(app);
 
-        contentBranch.addChild(edgedBox);
-        contentBranch.addChild(voxelBox);
+        transformGroup.addChild(edgedBox);
+        transformGroup.addChild(voxelBox);
 
     }
 
@@ -95,17 +96,17 @@ public class ModelUnit extends AbstractUnit {
         // TODO Auto-generated method stub
     }
 
-    @Override
-    public int serialize() {
-        return isVisible() ? content : 0;
-    }
-
-    @Override
-    public void deserialize(int value) {
-        content = value;
-        if (0 == value && isVisible() || 0 < value && !isVisible()) {
-            rollover();
-        }
-    }
+    // @Override
+    // public int serialize() {
+    // return isVisible() ? content : 0;
+    // }
+    //
+    // @Override
+    // public void deserialize(int value) {
+    // content = value;
+    // if (0 == value && isVisible() || 0 < value && !isVisible()) {
+    // rollover();
+    // }
+    // }
 
 }

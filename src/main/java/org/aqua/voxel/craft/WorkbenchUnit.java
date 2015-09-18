@@ -35,11 +35,12 @@ public class WorkbenchUnit extends AbstractUnit {
     }
 
     public WorkbenchUnit() {
+        super(UnitType.Workbench);
         float size = unit - Edge * 2;
         workbenchBox = new Box(size / 2, WorkbenchHeight, size / 2, NormalAppearance);
         workbenchBox.getShape(Box.TOP).setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 
-        contentBranch.addChild(workbenchBox);
+        transformGroup.addChild(workbenchBox);
     }
 
     @Override

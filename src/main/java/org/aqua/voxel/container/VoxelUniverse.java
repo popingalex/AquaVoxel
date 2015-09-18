@@ -31,7 +31,7 @@ import com.sun.j3d.utils.picking.behaviors.PickMouseBehavior;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 
 public abstract class VoxelUniverse {
-    public static final String         BRANCH_ARROW = "ARROW";
+    public static final String         BRANCH_BEACON = "BEACON";
     protected Map<String, BranchGroup> groupMap;
     private Canvas3D                   canvas;
     private BranchGroup                baseGroup;
@@ -47,10 +47,12 @@ public abstract class VoxelUniverse {
     public VoxelUniverse() {
         BoundingSphere behaviorBounding = new BoundingSphere(new Point3d(), 200);
         rootGroup = new BranchGroup();
-        baseGroup = new BranchGroup();
         groupMap = new HashMap<String, BranchGroup>();
         canvas = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
-
+        {
+            baseGroup = new BranchGroup();
+            baseGroup.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
+        }
         {
             scaleGroup = new TransformGroup();
             scaleGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
@@ -61,13 +63,13 @@ public abstract class VoxelUniverse {
             deflectionGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
             deflectionGroup.addChild(scaleGroup);
             {
-                BranchGroup cursorGroup = new BranchGroup();
-                cursorGroup.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
+                BranchGroup beaconGroup = new BranchGroup();
+                beaconGroup.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
                 TransformGroup transform = new TransformGroup();
                 transform.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-                transform.addChild(cursorGroup);
+                transform.addChild(beaconGroup);
                 deflectionGroup.addChild(transform);
-                groupMap.put(BRANCH_ARROW, cursorGroup);
+                groupMap.put(BRANCH_BEACON, beaconGroup);
             }
         }
         {
@@ -86,11 +88,9 @@ public abstract class VoxelUniverse {
             rootGroup.addChild(directionalLight);
             rootGroup.addChild(ambientLight);
             rootGroup.addChild(elevationGroup);
-
         }
         {
             PickMouseBehavior pickBehavior = new PickMouseBehavior(canvas, rootGroup, behaviorBounding) {
-
                 @SuppressWarnings("rawtypes")
                 @Override
                 public void processStimulus(Enumeration criteria) {
@@ -119,13 +119,11 @@ public abstract class VoxelUniverse {
                 }
             };
             MouseRotate rotateBehavior = new MouseRotate(deflectionGroup) {
-
                 @Override
                 public void processMouseEvent(MouseEvent evt) {
                     y_last = evt.getY();
                     super.processMouseEvent(evt);
                 }
-
             };
 
             pickBehavior.setMode(PickTool.GEOMETRY);
@@ -154,7 +152,7 @@ public abstract class VoxelUniverse {
         return canvas;
     }
 
-    public void addChild(Object node, String branch) {
+    public void display(String branch, Node node) {
         BranchGroup group;
         if (groupMap.containsKey(branch)) {
             group = groupMap.get(branch);
@@ -165,13 +163,17 @@ public abstract class VoxelUniverse {
             TransformGroup transform = new TransformGroup();
             transform.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
             transform.addChild(group);
-            baseGroup.addChild(transform);
+            BranchGroup shell = new BranchGroup();
+            shell.addChild(transform);
+            baseGroup.addChild(shell);
         }
-        group.addChild((Node) node);
+        group.addChild(node);
     }
-    
-    public void removeChild(Object node, String branch) {
-        
+
+    public void restore(String branch, Node node) {
+        if (groupMap.containsKey(branch)) {
+            groupMap.get(branch).removeChild(node);
+        }
     }
 
     public void translate(float[] coord3, String branch) {
@@ -215,5 +217,4 @@ public abstract class VoxelUniverse {
     }
 
     public abstract void picking(AbstractUnit pickUnit, int id, MouseEvent mevent);
-
 }

@@ -1,14 +1,18 @@
 package org.aqua.voxel;
 
 import java.awt.Canvas;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
 import javax.swing.JOptionPane;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.aqua.voxel.container.VoxelSandbox;
 import org.aqua.voxel.container.VoxelUniverse;
 import org.aqua.voxel.craft.AbstractUnit;
@@ -20,8 +24,12 @@ public class AquaVoxel {
     private VoxelUniverse universe;
 
     public AquaVoxel() {
-        universe = new VoxelUniverse() {
+        Logger logger = Logger.getRootLogger();
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+        // logger.setLevel(Level.DEBUG);
+        logger.setLevel(Level.INFO);
 
+        universe = new VoxelUniverse() {
             @Override
             public void picking(AbstractUnit pickUnit, int id, MouseEvent mevent) {
                 switch (mevent.getButton()) {
@@ -36,22 +44,18 @@ public class AquaVoxel {
                     break;
                 }
             }
-
         };
         sandbox = new VoxelSandbox() {
-
             @Override
-            public void addChild(Object node, String branch) {
-                universe.addChild(node, branch);
+            public void display(String branch, AbstractUnit unit) {
+                universe.display(branch, unit);
             }
 
             @Override
-            public void removeChild(Object node, String branch) {
-                universe.removeChild(node, branch);
+            public void restore(String branch, AbstractUnit unit) {
+                universe.restore(branch, unit);
             }
-
         };
-
         Canvas canvas = universe.getCanvas();
         canvas.setFocusable(false);
         canvas.addMouseWheelListener(new MouseWheelListener() {
@@ -60,9 +64,7 @@ public class AquaVoxel {
                 universe.scale(-e.getWheelRotation());
             }
         });
-
         editor = new VoxelEditor() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 String command = e.getActionCommand();
@@ -117,7 +119,6 @@ public class AquaVoxel {
                     JOptionPane.showInputDialog("把数据拷走", sandbox.exportModel());
                 }
             }
-
         };
         editor.setCanvas(canvas);
         editor.display();
@@ -131,5 +132,4 @@ public class AquaVoxel {
     public static void main(String[] args) {
         new AquaVoxel().build();
     }
-
 }
